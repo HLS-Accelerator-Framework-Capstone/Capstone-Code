@@ -1,5 +1,6 @@
 import pytest
 import subprocess
+import time
 
 # 1) Compile the assembly program
 #currently, the plan is to use nasm because that is what was suggested by a quick google,
@@ -19,18 +20,34 @@ with open("test_cases.txt", "r") as test_cases_file:
         test_cases.append(cleaned_tokens)
 
 
-# 4) Run test Cases
-# runs test for each tuple in test_cases
+#runs test for each tuple in test_cases
 @pytest.mark.parametrize("input, expected", test_cases)
 def test(input, expected):
-    # gives the input to stdin
-    input_str = " ".join(map(str, input))
+    global count
 
-    # runs the compiled program
+    #timer to measure latency
+    TestStartTime = time.time()
+
+    #prepares an input for stdin as a string
+    input_str = " ".join(map(str, input))
+    #runs the compiled program
     result = subprocess.run(["./program.exe"], input=input_str, text=True, capture_output=True)
 
-    # gets the output from stdout
+    #check end time
+    endTime = time.time()
+
+    #print latency
+    print(f"\nLatency for test case {count} : {endTime - TestStartTime}")
+    count += 1
+
+    #gets the output from stdout
     output = result.stdout.strip()
 
-    # tests if the output is equal to the expected for this tuple
+    #tests if the output is equal to the expected for this tuple
     assert output == expected
+
+@pytest.fixture(scope="session", autouse=True)
+def print_after_tests(request):
+    yield  # Tests run here
+    endTime = time.time()
+    print("\nAverage throughput = ",(endTime - startTime)/count," for ",count, " test cases")
